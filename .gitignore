@@ -76,3 +76,8 @@ files/
 
 #El bash hhistory
 .bash_history
+
+#Ignora binarios
+esclavo
+vista
+aplicacion
