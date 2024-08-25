@@ -70,3 +70,6 @@ Icon?
 .TemporaryItems
 .VolumeIcon.icns
 .apdisk
+
+# La carpeta de files
+files/
