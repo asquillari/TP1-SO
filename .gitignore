@@ -73,3 +73,6 @@ Icon?
 
 # La carpeta de files
 files/
+
+#El bash hhistory
+.bash_history
