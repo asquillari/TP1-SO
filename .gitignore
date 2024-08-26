@@ -78,6 +78,7 @@ files/
 .bash_history
 
 #Ignora binarios
+a.out
 esclavo
 vista
 aplicacion
