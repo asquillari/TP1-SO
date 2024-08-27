@@ -1,18 +1,18 @@
 CC = gcc
 CFLAGS = -Wall 
 
-#all: aplicacion esclavo vista
-all: esclavo
+#all: app slave view
+all: slave
 
-#aplicacion: aplicacion.c 
-#	$(CC) $(CFLAGS) aplicacion.c -o md5
+#app: app.c 
+#	$(CC) $(CFLAGS) app.c -o md5
 
-#vista: vista.c
-#	$(CC) $(CFLAGS) vista.c -o vista
+#view: view.c
+#	$(CC) $(CFLAGS) view.c -o view
 
-esclavo: esclavo.c 
-	$(CC) $(CFLAGS) esclavo.c -o esclavo
+slave: slave.c 
+	$(CC) $(CFLAGS) slave.c -o slave
 
 clean:
-#	rm -f vista esclavo md5
-	rm -f esclavo
+#	rm -f view slave md5
+	rm -f slave

@@ -79,6 +79,6 @@ files/
 
 #Ignora binarios
 a.out
-esclavo
-vista
-aplicacion
+slave
+view
+app
