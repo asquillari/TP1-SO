@@ -17,8 +17,18 @@ static int is_file(char * file);
 
 int main(int argc, char * argv[]){
     
-    get_md5(argv[1]);
+    //read filename 
+    char * file = NULL;
+    size_t len = 0;
+    ssize_t read;
 
+    //read from stdin
+    while((read = getline(&file, &len, stdin)) != -1){
+        file[read - 1] = '\0'; 
+        get_md5(file);
+    }
+
+    free(file);
     return 0;
 }
 
