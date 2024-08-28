@@ -17,6 +17,8 @@ int main(int argc, char *argv[]){
     }
 
     int cant_files=argc-1;
+    int cant_files_read = 0;
+    int cant_files_sent = 0;
     int cant_slaves = cant_files < MAX_SLAVES ? cant_files : MAX_SLAVES;
     int slaves_fd[2][cant_slaves];   //vamos a tener 2 pipes por cada slave
     char * slave_params[] = { "./slave", NULL };
@@ -38,18 +40,15 @@ int main(int argc, char *argv[]){
     int i;
     //mandamos la primera cantidad de archivos a cada uno
     for(i=0; i<cant_slaves; i++){
-        for (int j = 0; i < initial_dist; i++)
-        {
-            send_file();
-            cant_files--;
+        for (int j = 0; i < initial_dist; j++){
+            send_file(slaves_fd[0][i], argv[i+j+1], cant_files, cant_files_sent);
+            cant_files_sent++;
         }
     }
+    
 
     while(cant_files != 0){
-        for (i = 0; i < cant_slaves; i++){
-            send_file();
-            cant_files--;
-        }
+        
     }
     
 }
@@ -84,4 +83,12 @@ void create_all_slaves(int cant_slaves, int ** slaves_fd,char * slave_params[]){
         close(pipe_in[0]);
         close(pipe_out[1]);
     }
+}
+
+void send_file(int fd, char * filename, int cant_files, int cant_files_sent){
+    //checks if there are no more files to send
+    if (cant_files_sent == cant_files){
+        return;
+    }
+    dprintf(fd, "%s\n",filename);
 }
