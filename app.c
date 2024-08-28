@@ -1,8 +1,11 @@
 #include <stdio.h> 
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-#define MAX_ERROR 256
-#define MAX_SLAVES 10
+#include "app.h"
 
 int main(int argc, char *argv[]){
     //esto hay que modilarizarlo todo y hacer capas una clase
@@ -14,18 +17,46 @@ int main(int argc, char *argv[]){
     }
 
     int cant_files=argc-1;
-    int num_slaves = cant_files < MAX_SLAVES ? cant_files : MAX_SLAVES;
-    int slaves_fd[2][num_slaves];   //vamos a tener 2 pipes por cada slave
+    int cant_slaves = cant_files < MAX_SLAVES ? cant_files : MAX_SLAVES;
+    int slaves_fd[2][cant_slaves];   //vamos a tener 2 pipes por cada slave
     char * slave_params[] = { "./slave", NULL };
 
-    int initial_dist = (cant_files*0.2) / num_slaves;
+    int initial_dist = (cant_files*0.2) / cant_slaves;
 
     if(initial_dist == 0){
         initial_dist = 1;
     }
 
+    create_all_slaves(cant_slaves, &slaves_fd, slave_params);
+
+    int result_fd = open("result.txt", O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if(result_fd == -1){
+        perror("Error opening result file");
+        exit(EXIT_FAILURE);
+    }
+
     int i;
-    for(i=0; i<num_slaves; i++){
+    //mandamos la primera cantidad de archivos a cada uno
+    for(i=0; i<cant_slaves; i++){
+        for (int j = 0; i < initial_dist; i++)
+        {
+            send_file();
+            cant_files--;
+        }
+    }
+
+    while(cant_files != 0){
+        for (i = 0; i < cant_slaves; i++){
+            send_file();
+            cant_files--;
+        }
+    }
+    
+}
+
+void create_all_slaves(int cant_slaves, int ** slaves_fd,char * slave_params[]){
+    int i;
+    for(i=0; i<cant_slaves; i++){
         int pid;
         //Pipe para enviar los archivos
         int pipe_in[2];
