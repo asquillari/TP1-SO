@@ -7,6 +7,7 @@
 
 #include "app.h"
 #include "app_lib.h"
+#include <sys/select.h>
 
 int main(int argc, char *argv[]){
     //esto hay que modilarizarlo todo y hacer capas una clase
@@ -30,19 +31,13 @@ int main(int argc, char *argv[]){
         initial_dist = 1;
     }
 
-    create_all_slaves(cant_slaves, &slaves_fd, slave_params);
-
-    int result_fd = open("result.txt", O_WRONLY | O_CREAT | O_TRUNC, 0666);
-    if(result_fd == -1){
-        perror("Error opening result file");
-        exit(EXIT_FAILURE);
-    }
+    create_all_slaves(cant_slaves, slaves_fd, slave_params);
 
     int i;
     //mandamos la primera cantidad de archivos a cada uno
     for(i=0; i<cant_slaves; i++){
-        for (int j = 0; i < initial_dist; j++){
-            send_file(slaves_fd[1][i], argv[i+j+1], cant_files, cant_files_sent);//chequear si esta llamada funciona o si es 0
+        for (int j = 0; j < initial_dist; j++){
+            send_file(slaves_fd[1][i], argv[cant_files_sent], cant_files, cant_files_sent);//chequear si esta llamada funciona o si es 0
             cant_files_sent++;
         }
     }
@@ -54,7 +49,6 @@ int main(int argc, char *argv[]){
     int max_fd = 0;
 
     while(cant_files_read <= cant_files){
-
         FD_ZERO(&read_fds); //limpio el set
         for(i = 0; i<cant_slaves; i++) {
             // agregamos los fds al set
@@ -68,10 +62,12 @@ int main(int argc, char *argv[]){
             if(FD_ISSET(slaves_fd[0][i], &read_fds)){
                 char buffer[MAX_SIZE];
                 int read_bytes = read(slaves_fd[0][i], buffer, MAX_SIZE);//manejo de error
+                printf("buffer: %s\n", buffer);
                 buffer[read_bytes] = '\0';          
                 cant_files_read++;
                 if(cant_files_sent < cant_files){
-                    send_file(slaves_fd[1][i], argv[++cant_files_sent], cant_files, cant_files_sent);
+                    send_file(slaves_fd[1][i], argv[cant_files_sent+1], cant_files, cant_files_sent);
+                    cant_files_sent++;
                 }
                 fprintf(result_file, "%s", buffer);
             }
@@ -81,13 +77,13 @@ int main(int argc, char *argv[]){
     }
 
     //cerramos el archivo
-    close(result_fd);
+    fclose(result_file);
 
     return 0;
     
 }
 
-void create_all_slaves(int cant_slaves, int ** slaves_fd,char * slave_params[]){
+void create_all_slaves(int cant_slaves, int (*slaves_fd)[2],char * slave_params[]){
     int i;
     for(i=0; i<cant_slaves; i++){
         int pid;

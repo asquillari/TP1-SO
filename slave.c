@@ -27,7 +27,7 @@ int main(int argc, char * argv[]){
         file[read - 1] = '\0'; 
         get_md5(file);
     }
-
+    
     free(file);
     return 0;
 }
@@ -52,7 +52,6 @@ static void get_md5(char * file){
         md5[MD5_LEN] = '\0'; //saco de result el nombre del archivo
     }
     fprintf(stdout, FORMAT_OUTPUT, md5, file, getpid());
-
     pclose(fp);
     return;
 }
