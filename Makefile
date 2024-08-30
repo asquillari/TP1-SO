@@ -2,10 +2,10 @@ CC = gcc
 CFLAGS = -Wall 
 
 #all: app slave view
-all: slave
+all: slave app
 
-#app: app.c 
-#	$(CC) $(CFLAGS) app.c -o md5
+app: app.c app_lib.c
+	$(CC) $(CFLAGS) app.c -o md5
 
 #view: view.c
 #	$(CC) $(CFLAGS) view.c -o view
@@ -15,4 +15,4 @@ slave: slave.c
 
 clean:
 #	rm -f view slave md5
-	rm -f slave
+	rm -f slave md5

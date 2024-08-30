@@ -6,6 +6,7 @@
 #include <fcntl.h>
 
 #include "app.h"
+#include "app_lib.h"
 
 int main(int argc, char *argv[]){
     //esto hay que modilarizarlo todo y hacer capas una clase
@@ -41,15 +42,48 @@ int main(int argc, char *argv[]){
     //mandamos la primera cantidad de archivos a cada uno
     for(i=0; i<cant_slaves; i++){
         for (int j = 0; i < initial_dist; j++){
-            send_file(slaves_fd[0][i], argv[i+j+1], cant_files, cant_files_sent);
+            send_file(slaves_fd[1][i], argv[i+j+1], cant_files, cant_files_sent);//chequear si esta llamada funciona o si es 0
             cant_files_sent++;
         }
     }
-    
 
-    while(cant_files != 0){
-        
+    // creamos el file de resultado 
+    FILE * result_file = fopen("result.txt", "w"); //hay que agregar manejo de error
+    
+    fd_set read_fds;
+    int max_fd = 0;
+
+    while(cant_files_read <= cant_files){
+
+        FD_ZERO(&read_fds); //limpio el set
+        for(i = 0; i<cant_slaves; i++) {
+            // agregamos los fds al set
+            FD_SET(slaves_fd[0][i], &read_fds);
+            max_fd = MAX(max_fd,slaves_fd[0][i]);
+        }
+
+        ready_select(max_fd, &read_fds);
+
+        for(i = 0; i<cant_slaves; i++) {
+            if(FD_ISSET(slaves_fd[0][i], &read_fds)){
+                char buffer[MAX_SIZE];
+                int read_bytes = read(slaves_fd[0][i], buffer, MAX_SIZE);//manejo de error
+                buffer[read_bytes] = '\0';          
+                cant_files_read++;
+                if(cant_files_sent < cant_files){
+                    send_file(slaves_fd[1][i], argv[++cant_files_sent], cant_files, cant_files_sent);
+                }
+                fprintf(result_file, "%s", buffer);
+            }
+        }
+
+
     }
+
+    //cerramos el archivo
+    close(result_fd);
+
+    return 0;
     
 }
 
@@ -91,4 +125,11 @@ void send_file(int fd, char * filename, int cant_files, int cant_files_sent){
         return;
     }
     dprintf(fd, "%s\n",filename);
+}
+
+void ready_select(int max_fd, fd_set * read_fds) {
+    if(select(max_fd + 1, read_fds, NULL, NULL, NULL) == -1) {
+        perror("Select");
+        exit(1); //despues hay que mejorar nuestro manejo de errores
+    }
 }
