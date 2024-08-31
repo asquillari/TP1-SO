@@ -1,35 +1,14 @@
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-
-#define MAX_SIZE 256
-#define MD5_LEN 32
-
-#define FORMAT_OUTPUT "MD5: %s FILE: %s SLAVE_PID: %d\n"
-#define NOT_FILE "NOT A FILE"
-
-static void get_md5(char * file); //la pongo con int por si queremos mandar un error
-static int is_file(char * file);
+#include "slave.h"
 
 int main(int argc, char * argv[]){
     
     //read filename 
-    char * file = NULL;
-    size_t len = 0;
-    ssize_t read;
+    char file[MAX_SIZE] = {0};
 
     //read from stdin
-    while((read = getline(&file, &len, stdin)) != -1){
-        file[read - 1] = '\0'; 
-        get_md5(file);
-    }
-    
-    free(file);
-    return 0;
+    fgets(file, MAX_SIZE, stdin);
+    get_md5(file);
+    exit(EXIT_SUCCESS);
 }
 
 static void get_md5(char * file){
