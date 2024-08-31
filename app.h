@@ -5,7 +5,7 @@
 #include "app_lib.h"
 
 #define MAX_ERROR 256
-#define MAX_SLAVES 10
+#define MAX_SLAVES 4
 #define MAX_SIZE 256
 #define MAX(a,b) ((a)>(b)? (a):(b))
 

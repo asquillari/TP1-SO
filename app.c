@@ -37,8 +37,8 @@ int main(int argc, char *argv[]){
     //mandamos la primera cantidad de archivos a cada uno
     for(i=0; i<cant_slaves; i++){
         for (int j = 0; j < initial_dist; j++){
-            send_file(slaves_fd[1][i], argv[cant_files_sent], cant_files, cant_files_sent);//chequear si esta llamada funciona o si es 0
             cant_files_sent++;
+            send_file(slaves_fd[1][i], argv[cant_files_sent], cant_files, cant_files_sent);//chequear si esta llamada funciona o si es 0
         }
     }
 
