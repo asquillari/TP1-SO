@@ -16,7 +16,7 @@ int main(int argc, char *argv[]){
     int cant_slaves = cant_files < MAX_SLAVES ? cant_files : MAX_SLAVES;
     int master_slave[cant_slaves][2];
     int slave_master[cant_slaves][2];
-    char * slave_params[] = { "./slave", NULL };
+    char * slave_params[] = { "./slave", NULL }; 
 
     int initial_dist = (cant_files*0.2) / cant_slaves;
 
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
     }
 
     create_all_slaves(cant_slaves, master_slave, slave_master, slave_params);
-
+    
     int i;
     //mandamos la primera cantidad de archivos a cada uno
     for(i=0; i<cant_slaves; i++){
@@ -35,11 +35,13 @@ int main(int argc, char *argv[]){
         }
     }
 
+
     // creamos el file de resultado 
     FILE * result_file = fopen("result.txt", "w"); //hay que agregar manejo de error
     
     int max_fd = -1;
     fd_set read_fds;
+
 
     while(cant_files_read < cant_files){
         FD_ZERO(&read_fds); //limpio el set
@@ -48,7 +50,6 @@ int main(int argc, char *argv[]){
             FD_SET(slave_master[i][0], &read_fds);
             max_fd = MAX(max_fd,slave_master[i][0]);
         }
-
         ready_select(max_fd, read_fds);
 
         for(i = 0; i<cant_slaves; i++) {
@@ -75,8 +76,21 @@ int main(int argc, char *argv[]){
     //cerramos el archivo
     fclose(result_file);
 
+    close_pipes(master_slave, slave_master, cant_slaves, EXIT_SUCCESS);
+
     return 0;
     
+}
+
+void close_pipes(int (*master_slave)[2], int (*slave_master)[2], int cant_slaves, int exit_status){
+    int i;
+    for(i=0; i<cant_slaves; i++){
+        close(master_slave[i][0]);
+        close(master_slave[i][1]);
+        close(slave_master[i][0]);
+        close(slave_master[i][1]);
+    }
+    exit(exit_status);
 }
 
 void create_all_slaves(int cant_slaves, int (*master_slave)[2], int (*slave_master)[2],char * slave_params[]){

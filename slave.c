@@ -2,12 +2,13 @@
 
 int main(int argc, char * argv[]){
     
-    //read filename 
-    char file[MAX_SIZE] = {0};
+    while(1){
+        char file[MAX_SIZE];
+        //read from stdin
+        read(STDIN_FILENO, file, MAX_SIZE);
+        get_md5(file);
+    }
 
-    //read from stdin
-    fgets(file, MAX_SIZE, stdin);
-    get_md5(file);
     exit(EXIT_SUCCESS);
 }
 
