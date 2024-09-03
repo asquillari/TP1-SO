@@ -56,7 +56,7 @@ int main(int argc, char *argv[]){
             FD_SET(slave_master[i][0], &read_fds);
             max_fd = MAX(max_fd,slave_master[i][0]);
         }
-        ready_select(max_fd, read_fds);
+        ready_select(max_fd, &read_fds);
 
         for(i = 0; i<cant_slaves; i++) {
             if(FD_ISSET(slave_master[i][0], &read_fds)){
@@ -72,6 +72,7 @@ int main(int argc, char *argv[]){
                     send_file(master_slave[i][1], argv[cant_files_sent+1]);
                     cant_files_sent++;
                 }
+                buffer[bytes_read] = '\0';
                 fprintf(result_file, "%s", buffer);
             }
         }
@@ -123,15 +124,15 @@ void create_all_slaves(int cant_slaves, int (*master_slave)[2], int (*slave_mast
     }
 }
 
-void send_file(int fd, const char * filename){
+void send_file(int fd, const char *filename) {
     char input[MAX_SIZE];
-    strncpy(input, filename, MAX_SIZE-1);
-    write(fd, input, MAX_SIZE-1);
+    snprintf(input, MAX_SIZE, "%s\n", filename);  
+    write(fd, input, strlen(input));
 }
 
-void ready_select(int max_fd, fd_set read_fds) {
-    if(select(max_fd + 1, &read_fds, NULL, NULL, NULL) == -1) {
+void ready_select(int max_fd, fd_set *read_fds) {
+    if (select(max_fd + 1, read_fds, NULL, NULL, NULL) == -1) {
         perror("Select");
-        exit(1); //despues hay que mejorar nuestro manejo de errores
+        exit(1);
     }
 }

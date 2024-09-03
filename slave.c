@@ -2,41 +2,60 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "slave.h"
 
-int main(int argc, char * argv[]){
-    
-    while(1){
+int main(int argc, char *argv[]) {
+    while (1) {
         char file[MAX_SIZE];
-        //read from stdin
-        read(STDIN_FILENO, file, MAX_SIZE);
+        ssize_t bytes_read = read(STDIN_FILENO, file, MAX_SIZE - 1);
+
+        if (bytes_read <= 0) {
+            //hay que manejar mejor el error
+            break;
+        }
+
+        //formateo el file para poder usar bien el comando
+        file[bytes_read] = '\0';
+
+        char *newline = strchr(file, '\n'); 
+        //quizas igual esto lo podemos sacar si no lo mandamos con \n del app.c, ver en el futuro
+        if (newline) {
+            *newline = '\0';
+        }
+
         get_md5(file);
     }
 
     exit(EXIT_SUCCESS);
 }
 
-static void get_md5(char * file){
-    if (!is_file(file)){
-        fprintf(stdout, FORMAT_OUTPUT, NOT_FILE, file ,getpid());
+
+static void get_md5(char *file) {
+    if (!is_file(file)) {
+        fprintf(stdout, FORMAT_OUTPUT, NOT_FILE, file, getpid());
+        fflush(stdout); 
         return;
     }
-    //tengo que hacer aca el result
+
     char command[MAX_SIZE];
     char md5[MAX_SIZE];
 
     snprintf(command, MAX_SIZE, "md5sum %s", file);
 
-    FILE * fp = popen(command, "r");
-    if(fp == NULL){
+    FILE *fp = popen(command, "r");
+    if (fp == NULL) {
         perror("popen");
         return;
     }
-    if(fgets(md5, MAX_SIZE, fp) != NULL){
-        md5[MD5_LEN] = '\0'; //saco de result el nombre del archivo
+
+    if (fgets(md5, MAX_SIZE, fp) != NULL) {
+        md5[MD5_LEN] = '\0';
     }
+    
     fprintf(stdout, FORMAT_OUTPUT, md5, file, getpid());
+    fflush(stdout);  //mandamos inmediatamente
+
     pclose(fp);
-    return;
-}
+}//pclose, fflush todos esos me parece que tenemos que manejar el error
+
 
 static int is_file(char * file){
     struct stat path;
