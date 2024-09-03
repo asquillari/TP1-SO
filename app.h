@@ -19,7 +19,7 @@
 #define MAX(a,b) ((a)>(b)? (a):(b))
 
 void create_all_slaves(int cant_slaves, int (*master_slave)[2], int (*slave_master)[2],char * slave_params[]);
-void send_file(int fd, char * filename);
+void send_file(int fd, const char * filename);
 void ready_select(int max_fd, fd_set read_fds);
 void close_pipes(int (*master_slave)[2], int (*slave_master)[2], int cant_slaves, int exit_status);
 

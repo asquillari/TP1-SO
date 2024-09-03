@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "app.h"
 #include "app_lib.h"
 
@@ -37,8 +39,12 @@ int main(int argc, char *argv[]){
 
 
     // creamos el file de resultado 
-    FILE * result_file = fopen("result.txt", "w"); //hay que agregar manejo de error
-    
+    FILE * result_file = fopen("result.txt", "w"); 
+    if (result_file == NULL) {
+        perror("Error opening result file");
+        exit(EXIT_FAILURE);  
+    }
+
     int max_fd = -1;
     fd_set read_fds;
 
@@ -56,7 +62,7 @@ int main(int argc, char *argv[]){
             if(FD_ISSET(slave_master[i][0], &read_fds)){
                 char buffer[MAX_SIZE];
                 ssize_t bytes_read;
-                bytes_read = read(slave_master[i][0], buffer, MAX_SIZE);//manejo de error
+                bytes_read = read(slave_master[i][0], buffer, MAX_SIZE);
                 if(bytes_read < 0){
                     perror("Read");
                     exit(EXIT_FAILURE);
@@ -117,7 +123,7 @@ void create_all_slaves(int cant_slaves, int (*master_slave)[2], int (*slave_mast
     }
 }
 
-void send_file(int fd, char * filename){
+void send_file(int fd, const char * filename){
     char input[MAX_SIZE];
     strncpy(input, filename, MAX_SIZE-1);
     write(fd, input, MAX_SIZE-1);

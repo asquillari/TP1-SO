@@ -84,3 +84,8 @@ view
 app
 md5
 result.txt
+
+#ignora archivos de depuracion
+PVS-studio.log
+report.tasks
+strace_out

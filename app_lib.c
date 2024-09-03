@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "app_lib.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,15 +20,6 @@ int slave(){
         exit(EXIT_FAILURE);
     }
     return pid;
-}
-
-void set_slave_pipes(int * pipe_in, int * pipe_out){
-    close(pipe_in[1]);
-    dup2(pipe_in[0], STDIN_FILENO);
-    close(pipe_out[0]);
-    dup2(pipe_out[1], STDOUT_FILENO);
-    close(pipe_in[0]);
-    close(pipe_out[1]);
 }
 
 void start_slave(char * path, char * params[]){
