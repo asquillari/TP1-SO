@@ -89,3 +89,4 @@ result.txt
 PVS-studio.log
 report.tasks
 strace_out
+trace.log
