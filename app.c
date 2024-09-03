@@ -4,7 +4,7 @@
 #include "app_lib.h"
 
 int main(int argc, char *argv[]){
-    //esto hay que modilarizarlo todo y hacer capas una clase
+    //esto hay que modilarizarlo todo y hacer capaz una clase
     if (argc == 1) {
         char buffer_error[MAX_ERROR];
         snprintf(buffer_error, MAX_ERROR, "Error. Use: %s 'file' 'file' ...", argv[0]);
@@ -126,7 +126,7 @@ void create_all_slaves(int cant_slaves, int (*master_slave)[2], int (*slave_mast
 
 void send_file(int fd, const char *filename) {
     char input[MAX_SIZE];
-    snprintf(input, MAX_SIZE, "%s\n", filename);  
+    snprintf(input, MAX_SIZE, "%s", filename);  
     write(fd, input, strlen(input));
 }
 

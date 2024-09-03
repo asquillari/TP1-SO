@@ -12,14 +12,7 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        //formateo el file para poder usar bien el comando
         file[bytes_read] = '\0';
-
-        char *newline = strchr(file, '\n'); 
-        //quizas igual esto lo podemos sacar si no lo mandamos con \n del app.c, ver en el futuro
-        if (newline) {
-            *newline = '\0';
-        }
 
         get_md5(file);
     }
