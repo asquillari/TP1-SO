@@ -2,6 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "view.h"
+#include "shmADT.h"
 
 int main(int argc, char * argv[]){
 
@@ -26,10 +27,10 @@ int main(int argc, char * argv[]){
         } else {
             exit_failure("couldnt read from stdin");
         }
-        //shmADT shm = new_shm(shm_name);
+        shmADT shm = new_shm(shm_name);
 
     } else if(argc == 3){ //me lo mandan por argumentos
-        //shmADT shm = new_shm(argv[1]);
+        shmADT shm = new_shm(argv[1]);
         cant_files = atoi(argv[2]);
 
     } else {
