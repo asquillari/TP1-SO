@@ -5,13 +5,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-
+/*
 void create_pipe(int * pipe_fd){
     if(pipe(pipe_fd) == -1){
         perror("Pipe");
         exit(EXIT_FAILURE);
     }
 }
+
 
 int slave(){
     int pid;
@@ -27,3 +28,4 @@ void start_slave(char * path, char * params[]){
     perror("Execve");
     exit(EXIT_FAILURE);
 }
+*/
