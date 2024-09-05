@@ -5,8 +5,16 @@
 
 
 typedef struct shmCDT {
+
     const char * shm_name;
-    
+    //faltan semaforos
+
+    char * address;
+    int write_offset;
+    int read_offset;
+
+    size_t size;
+    int fd;
 
 } shmCDT;
 
