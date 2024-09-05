@@ -16,4 +16,4 @@ slave: slave.c
 
 clean:
 #	rm -f view slave md5
-	rm -f slave md5
+	rm -f slave md5 result.txt
