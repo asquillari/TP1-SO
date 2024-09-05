@@ -101,8 +101,8 @@ void send_first_files(slaveADT sm){
     }
     for(i=0; i<sm->cant_slaves; i++){
         for (int j = 1; j <= initial_dist && sm->cant_files_sent < sm->cant_files; j++){
-            sm->cant_files_sent++; 
-            send_file(sm->pipes[i]->master_slave[1], sm->files[sm->cant_files_sent]);   
+            send_file(sm->pipes[i]->master_slave[1], sm->files[sm->cant_files_sent]);
+            sm->cant_files_sent++;    
         }
     }
     return;
@@ -137,14 +137,14 @@ int read_from_slave(slaveADT sm, char * buffer){
         return EXIT_FAILURE;
     }
 
-    bytes_read = read(sm->pipes[i]->slave_master[0], buffer, MAX_SIZE);
+    bytes_read = read(sm->pipes[sindex]->slave_master[0], buffer, MAX_SIZE);
     buffer[bytes_read] = '\0';
     sm->cant_files_sent++;
 
     FD_CLR(sm->pipes[sindex]->master_slave[1], &sm->readFds);
 
     if(sm->cant_files_sent < sm->cant_files){
-        send_file(sm->pipes[i]->master_slave[1], sm->files[sm->cant_files_sent]);
+        send_file(sm->pipes[sindex]->master_slave[1], sm->files[sm->cant_files_sent]);
         sm->cant_files_sent++;
     }
 
@@ -169,7 +169,9 @@ int has_next_file(slaveADT sm){
         return 0;
     }
 
-    return sm->cant_files_sent < sm->cant_files;
+    return sm->cant_files_sent < sm->cant_files; 
+    //falla esta pregunta porque cuando son pocos archivos el sent se hace al principio
+    //siempre va a dar false porque son iguales
 }
 
 void close_pipes(slaveADT sm){

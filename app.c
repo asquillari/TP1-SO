@@ -15,12 +15,7 @@ int main(int argc, char *argv[]){
 
 
     int cant_files=argc-1;
-    
-    
-    char ** files = malloc(sizeof(char *) * (cant_files+1));
-    for(int i = 1 ; i <= cant_files ; i++){
-        files[i] = argv[i];
-    }
+    char ** files = &argv[1];
 
     /*
     int cant_files_read = 0;
@@ -60,7 +55,7 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);  
     }
 
-    while(has_next_file(sm)){
+    while(has_next_file(sm)){//con pocos archivos no entra nunca
         char buffer[MAX_SIZE] = {0};
         int bytes_read = read_from_slave(sm, buffer);
 
