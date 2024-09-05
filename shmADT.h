@@ -2,6 +2,10 @@
 #define _shmADT_H
 
 #include <stdio.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 
 typedef struct shmCDT * shmADT;
 
