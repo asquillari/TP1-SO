@@ -9,7 +9,7 @@ int main(int argc, char * argv[]){
     int cant_files = 0;
     char * shm_name;
     char * cant_files_str;
-    //shmADT shm = NULL;
+    shmADT shm = NULL;
 
     if(argc == 1){ //me lo mandan por stdin el nombre
         
@@ -27,17 +27,39 @@ int main(int argc, char * argv[]){
         } else {
             exit_failure("couldnt read from stdin");
         }
-        shmADT shm = new_shm(shm_name);
+        shm = open_shm(shm_name, O_RDWR, S_IRUSR | S_IWUSR);
 
     } else if(argc == 3){ //me lo mandan por argumentos
-        shmADT shm = new_shm(argv[1]);
+        shm = open_shm(argv[1], O_RDWR, S_IRUSR | S_IWUSR);
         cant_files = atoi(argv[2]);
 
     } else {
         exit_failure("invalid arguments");
     }
 
-    //leer y escribir en stdin
+    if (shm == NULL) {
+        exit_failure("error creating pshm");
+    }
+
+    if (cant_files < 0) {
+        free_shm(shm);
+        exit_failure("Error retrieving fileQty");
+    }
+
+    char buffer[BUFFER_SIZE] = {0};
+
+    while(cant_files > 0){
+        int bytesRead = read_shm(shm, buffer, BUFFER_SIZE);
+        if (bytesRead == -1) {
+            free_shm(shm);
+            exit_failure("Error reading pshm");
+        }
+        printf("%s", buffer);
+        cant_files--;
+    }
+    
+    free_shm(shm);
+    return 0;
 
 }
 
