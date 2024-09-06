@@ -170,10 +170,7 @@ int has_next_file(slaveADT sm){
     if (sm == NULL) {
         return 0;
     }
-
     return sm->cant_files_read < sm->cant_files; 
-    //falla esta pregunta porque cuando son pocos archivos el sent se hace al principio
-    //siempre va a dar false porque son iguales
 }
 
 void close_pipes(slaveADT sm){
