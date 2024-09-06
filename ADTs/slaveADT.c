@@ -130,7 +130,6 @@ int read_from_slave(slaveADT sm, char * buffer){
         if(FD_ISSET(sm->pipes[i]->slave_master[0], &read_fds)){
             sindex = i;
         }
-        i++;
     }    
                       
     if(sindex == -1) {
@@ -158,6 +157,10 @@ static void ready_select(int max_fd, fd_set *read_fds) {
     }
 }
 
+void has_read(slaveADT sm){
+    sm->cant_files_read++;
+}
+
 static void send_file(int fd, const char *filename) {
     char input[MAX_SIZE];
     snprintf(input, MAX_SIZE, "%s", filename);  
@@ -169,7 +172,7 @@ int has_next_file(slaveADT sm){
         return 0;
     }
 
-    return sm->cant_files_sent < sm->cant_files; 
+    return sm->cant_files_read < sm->cant_files; 
     //falla esta pregunta porque cuando son pocos archivos el sent se hace al principio
     //siempre va a dar false porque son iguales
 }

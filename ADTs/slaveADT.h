@@ -18,6 +18,7 @@ typedef struct pipesCDT * pipesADT;
 slaveADT initialize_slaves(int cant_files, char ** files);
 void send_first_files(slaveADT sm);
 int read_from_slave(slaveADT sm, char * buffer);
+void has_read(slaveADT sm);
 void close_pipes(slaveADT sm);
 int has_next_file(slaveADT sm);
 void close_pipes(slaveADT sm);

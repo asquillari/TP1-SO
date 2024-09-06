@@ -55,7 +55,8 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);  
     }
 
-    while(has_next_file(sm)){//con pocos archivos no entra nunca
+    //con pocos archivos no entra nunca
+    while(has_next_file(sm)){
         char buffer[MAX_SIZE] = {0};
         int bytes_read = read_from_slave(sm, buffer);
 
@@ -64,7 +65,8 @@ int main(int argc, char *argv[]){
             free(sm);
             exit(EXIT_FAILURE);
         }
-        fflush(result_file);
+        has_read(sm);
+        //fflush(result_file);
         fprintf(result_file, "%s", buffer);
         
         //fijarse que onda el error
