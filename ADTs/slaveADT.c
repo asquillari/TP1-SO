@@ -1,23 +1,16 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include "slaveADT.h"
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/select.h>
-#include <string.h>
 
 static void create_all_slaves(slaveADT sm);
 static void ready_select(int max_fd, fd_set *read_fds);
 static void send_file(int fd, const char *filename);
+static void close_pipes(slaveADT sm);
 
 typedef struct pipesCDT{
     int master_slave[2];
     int slave_master[2];
 } pipesCDT;
-
 
 typedef struct slaveCDT {
     // Files to process
@@ -32,10 +25,6 @@ typedef struct slaveCDT {
     fd_set readFds;
 
 } slaveCDT;
-
-
-
-typedef struct slave * slave_t;
 
 
 slaveADT initialize_slaves(int cant_files, char ** files){
@@ -69,7 +58,6 @@ slaveADT initialize_slaves(int cant_files, char ** files){
     create_all_slaves(slaves);
     return slaves;
 }
-
 
 static void create_all_slaves(slaveADT sm){
     int i;
@@ -176,7 +164,7 @@ int has_next_file(slaveADT sm){
     return sm->cant_files_read < sm->cant_files; 
 }
 
-void close_pipes(slaveADT sm){
+static void close_pipes(slaveADT sm){
     int i;
     for(i=0; i<sm->cant_slaves; i++){
         close(sm->pipes[i]->master_slave[0]);
