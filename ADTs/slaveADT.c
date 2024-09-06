@@ -138,7 +138,6 @@ int read_from_slave(slaveADT sm, char * buffer){
 
     bytes_read = read(sm->pipes[sindex]->slave_master[0], buffer, MAX_SIZE);
     buffer[bytes_read] = '\0';
-    sm->cant_files_sent++;
 
     FD_CLR(sm->pipes[sindex]->master_slave[1], &sm->readFds);
 
