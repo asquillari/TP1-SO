@@ -5,6 +5,9 @@
 
 #define ERROR -1
 #define SHM_SIZE 1024
+#define END_OF_LINE '\n'
+
+static shmADT new_shm(const char * shm_name, int oflag, mode_t mode, int prot, int creator);
 
 typedef struct shmCDT {
 
@@ -46,7 +49,7 @@ static shmADT new_shm(const char * shm_name, int oflag, mode_t mode, int prot, i
 
     if (creator){
         if (ftruncate(new->fd, SHM_SIZE) == ERROR) {
-            freePshm(new);
+            free_shm(new);
             return NULL;
         }
         new->sem_readwrite = sem_open(new->sem_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
@@ -56,7 +59,7 @@ static shmADT new_shm(const char * shm_name, int oflag, mode_t mode, int prot, i
     
     new->address = mmap(NULL, SHM_SIZE, prot, MAP_SHARED, new->fd, 0);
     if(new->address == MAP_FAILED) {
-        freePshm(new);
+        free_shm(new);
         return NULL;
     }
     
@@ -71,12 +74,52 @@ shmADT create_shm(const char * shm_name, int oflag, mode_t mode) {
     return new_shm(shm_name, oflag, mode, PROT_READ | PROT_WRITE, 1);
 }
 
-int write_shm(shmADT shm) {
-    return 0;
+int write_shm(shmADT shm, const char * buffer, size_t cant_bytes) {
+    if(shm == NULL || cant_bytes == 0 || buffer == NULL) {
+        return ERROR;
+    }
+
+    size_t bytes_written = 0;
+
+    while (bytes_written < cant_bytes && buffer[bytes_written] != '\0') {
+        shm->address[shm->write_offset++] = buffer[bytes_written];
+
+        if (buffer[bytes_written] == END_OF_LINE) {
+            bytes_written++;
+            break;
+        }
+
+        bytes_written++;
+    }
+
+    sem_post(shm->sem_readwrite); 
+
+    return bytes_written;
 }
 
 int read_shm(shmADT shm, char * buffer, size_t cant_bytes) {
-    return 0;
+    if(shm == NULL || cant_bytes == 0) {
+        return ERROR;
+    }
+
+    sem_wait(shm->sem_readwrite);
+    size_t bytes_read = 0;
+    while (bytes_read < cant_bytes) {
+        buffer[bytes_read] = shm->address[shm->read_offset++];
+
+        if (buffer[bytes_read] == END_OF_LINE) {
+            bytes_read++;
+            break;  
+        }
+
+        bytes_read++;
+    }
+
+    if (bytes_read < cant_bytes) {
+        buffer[bytes_read] = '\0';
+    }
+
+    return bytes_read;
 }
 
 void free_shm(shmADT shm) {

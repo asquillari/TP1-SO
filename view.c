@@ -2,7 +2,9 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "include/view.h"
-#include "shmADT.h"
+#include "ADTs/shmADT.h"
+
+static void exit_failure(const char *msg);
 
 int main(int argc, char * argv[]){
 
@@ -38,7 +40,7 @@ int main(int argc, char * argv[]){
     }
 
     if (shm == NULL) {
-        exit_failure("error creating pshm");
+        exit_failure("error creating shm");
     }
 
     if (cant_files < 0) {
