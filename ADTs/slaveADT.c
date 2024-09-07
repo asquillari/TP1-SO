@@ -69,7 +69,14 @@ static void create_all_slaves(slaveADT sm){
 
         pid = slave();
 
+        printf("Slave %d created\n", pid);
+
         if(pid == 0){
+            int j;
+            for(j=0; j<i;j++){
+                close(sm->pipes[j]->master_slave[1]);
+                close(sm->pipes[j]->slave_master[0]);
+            }
             close(STDIN_FILENO);
             dup2(sm->pipes[i]->master_slave[0], STDIN_FILENO);
             close(STDOUT_FILENO);
@@ -167,10 +174,8 @@ int has_next_file(slaveADT sm){
 void close_pipes(slaveADT sm){
     int i;
     for(i=0; i<sm->cant_slaves; i++){
-        close(sm->pipes[i]->master_slave[0]);
         close(sm->pipes[i]->master_slave[1]);
         close(sm->pipes[i]->slave_master[0]);
-        close(sm->pipes[i]->slave_master[1]);
     }
     exit(EXIT_SUCCESS);
 }
