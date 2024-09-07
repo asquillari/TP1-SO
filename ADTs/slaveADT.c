@@ -80,7 +80,8 @@ static void create_all_slaves(slaveADT sm){
             dup2(sm->pipes[i]->slave_master[1], STDOUT_FILENO);
             close(sm->pipes[i]->master_slave[1]);
             close(sm->pipes[i]->slave_master[0]);
-            start_slave(SLAVE_PATH, NULL);
+            char * params[] = {"./slave", NULL};
+            start_slave(SLAVE_PATH, params);
         }
         close(sm->pipes[i]->master_slave[0]);
         close(sm->pipes[i]->slave_master[1]);
@@ -199,14 +200,14 @@ void start_slave(char * path, char * params[]){
     exit(EXIT_FAILURE);
 }
 
-void free_slave(slaveADT sm){
-    for(int i = 0; i < sm->cant_slaves; i++){
-        free(sm->pipes[i]);
+void free_slave(slaveADT sm) {
+    if (sm == NULL) {
+        return;
     }
+    for (int i = 0; i < sm->cant_slaves; i++) {
+        free(sm->pipes[i]);  
+    }
+    
     free(sm->pipes);
-    for(int i = 0; i < sm->cant_files; i++){
-        free(sm->files[i]);
-    }
-    free(sm->files);
     free(sm);
 }
