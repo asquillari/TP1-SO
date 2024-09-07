@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall 
+CFLAGS = -Wall -fsanitize=address -g
 SOURCES_ADT=$(wildcard ADTs/*.c)
 OBJECTS_ADT=$(SOURCES_ADT:.c=.o)
 all: $(BINARIES) $(OBJECTS_ADT)
