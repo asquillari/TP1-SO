@@ -5,7 +5,6 @@
 static void create_all_slaves(slaveADT sm);
 static void ready_select(int max_fd, fd_set *read_fds);
 static void send_file(int fd, const char *filename);
-//static void close_pipes(slaveADT sm);
 
 typedef struct pipesCDT{
     int master_slave[2];
@@ -68,8 +67,6 @@ static void create_all_slaves(slaveADT sm){
         create_pipe(sm->pipes[i]->slave_master);
 
         pid = slave();
-
-        printf("Slave %d created\n", pid);
 
         if(pid == 0){
             int j;
