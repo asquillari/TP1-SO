@@ -45,7 +45,7 @@ int main(int argc, char * argv[]){
 
     if (cant_files < 0) {
         free_shm(shm);
-        exit_failure("Error retrieving fileQty");
+        exit_failure("error retrieving cant_files");
     }
 
     char buffer[BUFFER_SIZE] = {0};
@@ -54,7 +54,7 @@ int main(int argc, char * argv[]){
         int bytesRead = read_shm(shm, buffer, BUFFER_SIZE);
         if (bytesRead == -1) {
             free_shm(shm);
-            exit_failure("Error reading pshm");
+            exit_failure("Error reading shm");
         }
         printf("%s", buffer);
         cant_files--;
