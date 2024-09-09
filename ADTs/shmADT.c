@@ -11,9 +11,11 @@
 typedef struct shmCDT {
 
     const char * shm_name;
-    const char * sem_name;
+    const char * sem_name_readwrite;
+    const char * sem_name_mutex;
 
     sem_t * sem_readwrite;
+    sem_t * sem_mutex;
 
     char * address;
     int write_offset;
@@ -34,7 +36,8 @@ shmADT open_shm(const char * shm_name) {
     }
 
     shm->shm_name = shm_name;
-    shm->sem_name = SEM_NAME;
+    shm->sem_name_readwrite = SEM_NAME_RDWR;
+    shm->sem_name_mutex = SEM_NAME_MUTEX;
     shm->write_offset = 0;
     shm->read_offset = 0;
 
@@ -46,7 +49,11 @@ shmADT open_shm(const char * shm_name) {
         close_shm(shm);
         return NULL;
     }
-    if((shm->sem_readwrite = sem_open(shm->sem_name, 0, S_IWUSR | S_IRUSR, 0)) == SEM_FAILED) {
+    if((shm->sem_readwrite = sem_open(shm->sem_name_readwrite, 0, S_IWUSR | S_IRUSR, 0)) == SEM_FAILED) {
+        close_shm(shm);
+        return NULL;
+    }
+    if((shm->sem_mutex = sem_open(shm->sem_name_mutex, 0, S_IWUSR | S_IRUSR, 1)) == SEM_FAILED) {
         close_shm(shm);
         return NULL;
     }
@@ -64,7 +71,8 @@ shmADT create_shm(const char * shm_name) {
     }
 
     shm->shm_name = shm_name;
-    shm->sem_name = SEM_NAME;
+    shm->sem_name_readwrite = SEM_NAME_RDWR;
+    shm->sem_name_mutex = SEM_NAME_MUTEX;
     shm->write_offset = 0;
     shm->read_offset = 0;
 
@@ -80,7 +88,11 @@ shmADT create_shm(const char * shm_name) {
         destroy_shm(shm);
         return NULL;
     }
-    if((shm->sem_readwrite = sem_open(shm->sem_name, O_CREAT, S_IWUSR | S_IRUSR, 0)) == SEM_FAILED) {
+    if((shm->sem_readwrite = sem_open(shm->sem_name_readwrite, O_CREAT, S_IWUSR | S_IRUSR, 0)) == SEM_FAILED) {
+        destroy_shm(shm);
+        return NULL;
+    }
+    if((shm->sem_mutex = sem_open(shm->sem_name_mutex, O_CREAT, S_IWUSR | S_IRUSR, 1)) == SEM_FAILED) {
         destroy_shm(shm);
         return NULL;
     }
@@ -94,7 +106,7 @@ int write_shm(shmADT shm, const char * buffer, size_t cant_bytes) {
     }
 
     size_t bytes_written = 0;
-    
+    sem_wait(shm->sem_mutex);
     while (bytes_written < cant_bytes && buffer[bytes_written] != '\0') {
         shm->address[shm->write_offset++] = buffer[bytes_written];
 
@@ -105,7 +117,7 @@ int write_shm(shmADT shm, const char * buffer, size_t cant_bytes) {
 
         bytes_written++;
     }
-    
+    sem_post(shm->sem_mutex);
     sem_post(shm->sem_readwrite); 
 
     return bytes_written;
@@ -117,6 +129,7 @@ int read_shm(shmADT shm, char * buffer, size_t cant_bytes) {
     }
 
     sem_wait(shm->sem_readwrite);
+    sem_wait(shm->sem_mutex);
     size_t bytes_read = 0;    
     while (bytes_read < cant_bytes) {
         buffer[bytes_read] = shm->address[shm->read_offset++];
@@ -132,7 +145,8 @@ int read_shm(shmADT shm, char * buffer, size_t cant_bytes) {
     if (bytes_read < cant_bytes) {
         buffer[bytes_read] = '\0';
     }
-    
+    sem_post(shm->sem_mutex);
+
     return bytes_read;
 }
 
@@ -143,6 +157,7 @@ void close_shm(shmADT shm) {
 
     munmap(shm->address, SHM_SIZE);
     sem_close(shm->sem_readwrite);
+    sem_close(shm->sem_mutex);
     close(shm->fd);
     free(shm);
 }
@@ -154,6 +169,7 @@ void destroy_shm(shmADT shm) {
 
     munmap(shm->address, SHM_SIZE);
     shm_unlink(shm->shm_name);
-    sem_unlink(shm->sem_name);
+    sem_unlink(shm->sem_name_readwrite);
+    sem_unlink(shm->sem_name_mutex);
     free(shm);
 }

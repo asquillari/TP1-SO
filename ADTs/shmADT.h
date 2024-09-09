@@ -10,7 +10,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define SEM_NAME "/semaphore_rdwr"
+#define SEM_NAME_RDWR "/semaphore_rdwr"
+#define SEM_NAME_MUTEX "/semaphore_mutex"
 
 typedef struct shmCDT * shmADT;
 
