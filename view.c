@@ -8,31 +8,34 @@ static void exit_failure(const char *msg);
 
 int main(int argc, char * argv[]){
 
-    int cant_files = 0;
-    char * shm_name;
-    char * cant_files_str;
+     int cant_files = 0;
+    char * shm_name = NULL;
+    char * cant_files_str = NULL;
     shmADT shm = NULL;
 
-    if(argc == 1){ //me lo mandan por stdin el nombre
-        
-        shm_name = NULL;
+    if (argc == 1) { // Leer desde stdin
         size_t len = 0;
-        getline(&shm_name, &len, stdin);
+
+        if (getline(&shm_name, &len, stdin) == -1) {
+            exit_failure("Error al leer shm_name desde stdin");
+        }
+        shm_name[strcspn(shm_name, "\n")] = '\0'; 
 
         len = 0;
-        getline(&cant_files_str, &len, stdin);
+        if (getline(&cant_files_str, &len, stdin) == -1) {
+            exit_failure("Error al leer cant_files desde stdin");
+        }
+        cant_files_str[strcspn(cant_files_str, "\n")] = '\0'; 
         cant_files = atoi(cant_files_str);
 
-        if (shm_name != NULL && cant_files_str != NULL) {
-            shm_name[strcspn(shm_name, "\n")] = '\0';
-            cant_files_str[strcspn(cant_files_str, "\n")] = '\0';
-        } else {
-            exit_failure("couldnt read from stdin");
+        if (shm_name == NULL || cant_files_str == NULL) {
+            exit_failure("No se pudo leer desde stdin");
         }
-        shm = open_shm(shm_name, O_RDWR, S_IRUSR | S_IWUSR);
+        
+        shm = open_shm(shm_name);
 
     } else if(argc == 3){ //me lo mandan por argumentos
-        shm = open_shm(argv[1], O_RDWR, S_IRUSR | S_IWUSR);
+        shm = open_shm(argv[1]);
         cant_files = atoi(argv[2]);
 
     } else {
@@ -44,7 +47,7 @@ int main(int argc, char * argv[]){
     }
 
     if (cant_files < 0) {
-        free_shm(shm);
+        close_shm(shm);
         exit_failure("error retrieving cant_files");
     }
 
@@ -53,14 +56,15 @@ int main(int argc, char * argv[]){
     while(cant_files > 0){
         int bytesRead = read_shm(shm, buffer, BUFFER_SIZE);
         if (bytesRead == -1) {
-            free_shm(shm);
+            close_shm(shm);
             exit_failure("Error reading shm");
         }
         printf("%s", buffer);
         cant_files--;
     }
+    putchar('\n');
     
-    free_shm(shm);
+    close_shm(shm);
     free(shm_name);
     free(cant_files_str);
     return 0;

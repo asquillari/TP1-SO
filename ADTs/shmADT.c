@@ -7,7 +7,6 @@
 #define SHM_SIZE 1024
 #define END_OF_LINE '\n'
 
-static shmADT new_shm(const char * shm_name, int oflag, mode_t mode, int prot, int creator);
 
 typedef struct shmCDT {
 
@@ -24,63 +23,69 @@ typedef struct shmCDT {
 
 } shmCDT;
 
-static shmADT new_shm(const char * shm_name, int oflag, mode_t mode, int prot, int creator) {
+
+shmADT open_shm(const char * shm_name) {
     if(shm_name == NULL) {
-        errno = EINVAL;
+        return NULL;
+    }
+    shmADT shm = malloc(sizeof(shmCDT));
+    if(shm == NULL) {
         return NULL;
     }
 
-    shmADT new = malloc(sizeof(shmCDT));
-    if(new == NULL) {
+    shm->shm_name = shm_name;
+    shm->sem_name = SEM_NAME;
+    shm->write_offset = 0;
+    shm->read_offset = 0;
+
+    if((shm->fd = shm_open(shm->shm_name, O_RDWR, S_IWUSR | S_IRUSR)) == ERROR) {
+        close_shm(shm);
+        return NULL;
+    }
+    if((shm->address = mmap(NULL, SHM_SIZE, PROT_READ, MAP_SHARED, shm->fd, 0)) == MAP_FAILED) {
+        close_shm(shm);
+        return NULL;
+    }
+    if((shm->sem_readwrite = sem_open(shm->sem_name, 0, S_IWUSR | S_IRUSR, 0)) == SEM_FAILED) {
+        close_shm(shm);
         return NULL;
     }
 
-    new->shm_name = shm_name;
-    new->sem_name = SEM_NAME;
-
-    new->fd = shm_open(new->shm_name, oflag, mode);
-    if(new->fd == ERROR) {
-        free(new);
-        return NULL;
-    }
-
-    new->write_offset = 0;
-    new->read_offset = 0;
-
-    if (creator){
-        if (ftruncate(new->fd, SHM_SIZE) == ERROR) {
-            free_shm(new);
-            return NULL;
-        }
-        new->sem_readwrite = sem_open(new->sem_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
-        if (new->sem_readwrite == SEM_FAILED){
-            free_shm(new);
-            return NULL;
-        }
-        
-    } else {
-        new->sem_readwrite = sem_open(new->sem_name, 0);
-        if (new->sem_readwrite == SEM_FAILED){
-            free_shm(new);
-            return NULL;
-        }
-    }
-    
-    new->address = mmap(NULL, SHM_SIZE, prot, MAP_SHARED, new->fd, 0);
-    if(new->address == MAP_FAILED) {
-        free_shm(new);
-        return NULL;
-    }
-    
-    return new;
+    return shm;
 }
 
-shmADT open_shm(const char * shm_name, int oflag, mode_t mode) {
-    return new_shm(shm_name, oflag, mode, PROT_READ, 0);
-}
+shmADT create_shm(const char * shm_name) {
+    if(shm_name == NULL) {
+        return NULL;
+    }
+    shmADT shm = malloc(sizeof(shmCDT));
+    if(shm == NULL) {
+        return NULL;
+    }
 
-shmADT create_shm(const char * shm_name, int oflag, mode_t mode) {
-    return new_shm(shm_name, oflag, mode, PROT_READ | PROT_WRITE, 1);
+    shm->shm_name = shm_name;
+    shm->sem_name = SEM_NAME;
+    shm->write_offset = 0;
+    shm->read_offset = 0;
+
+    if((shm->fd = shm_open(shm->shm_name, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR)) == ERROR) {
+        destroy_shm(shm);
+        return NULL;
+    }
+    if(ftruncate(shm->fd, SHM_SIZE) == ERROR) {
+        destroy_shm(shm);
+        return NULL;
+    }
+    if((shm->address = mmap(NULL, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm->fd, 0)) == MAP_FAILED) {
+        destroy_shm(shm);
+        return NULL;
+    }
+    if((shm->sem_readwrite = sem_open(shm->sem_name, O_CREAT, S_IWUSR | S_IRUSR, 0)) == SEM_FAILED) {
+        destroy_shm(shm);
+        return NULL;
+    }
+
+    return shm;
 }
 
 int write_shm(shmADT shm, const char * buffer, size_t cant_bytes) {
@@ -89,7 +94,7 @@ int write_shm(shmADT shm, const char * buffer, size_t cant_bytes) {
     }
 
     size_t bytes_written = 0;
-
+    
     while (bytes_written < cant_bytes && buffer[bytes_written] != '\0') {
         shm->address[shm->write_offset++] = buffer[bytes_written];
 
@@ -100,7 +105,7 @@ int write_shm(shmADT shm, const char * buffer, size_t cant_bytes) {
 
         bytes_written++;
     }
-
+    
     sem_post(shm->sem_readwrite); 
 
     return bytes_written;
@@ -112,7 +117,7 @@ int read_shm(shmADT shm, char * buffer, size_t cant_bytes) {
     }
 
     sem_wait(shm->sem_readwrite);
-    size_t bytes_read = 0;
+    size_t bytes_read = 0;    
     while (bytes_read < cant_bytes) {
         buffer[bytes_read] = shm->address[shm->read_offset++];
 
@@ -127,23 +132,28 @@ int read_shm(shmADT shm, char * buffer, size_t cant_bytes) {
     if (bytes_read < cant_bytes) {
         buffer[bytes_read] = '\0';
     }
-
+    
     return bytes_read;
 }
 
-void free_shm(shmADT shm) {
+void close_shm(shmADT shm) {
     if(shm == NULL) {
         return;
     }
 
     munmap(shm->address, SHM_SIZE);
+    sem_close(shm->sem_readwrite);
     close(shm->fd);
+    free(shm);
+}
 
+void destroy_shm(shmADT shm) {
+    if(shm == NULL) {
+        return;
+    }
+
+    munmap(shm->address, SHM_SIZE);
     shm_unlink(shm->shm_name);
     sem_unlink(shm->sem_name);
-
-    sem_close(shm->sem_readwrite);
-
     free(shm);
-    return;
 }

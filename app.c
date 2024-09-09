@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
     int cant_files=argc-1;
     char ** files = &argv[1];
 
-    shmADT shm = create_shm("CONNECT_SHM", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    shmADT shm = create_shm("CONNECT_SHM");
     if (shm == NULL) {
         perror("Error creating shared memory");
         exit(EXIT_FAILURE);
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]){
     slaveADT sm = initialize_slaves(cant_files, files);
     if (sm == NULL) {
         perror("Error creating slave manager");
-        free_shm(shm);
+        destroy_shm(shm);
         exit(EXIT_FAILURE);
     }
 
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
     // creamos el file de resultado 
     FILE * result_file = fopen("result.txt", "w"); 
     if (result_file == NULL) {
-        free_shm(shm);
+        destroy_shm(shm);
         free_slave(sm);
         perror("Error opening result file");
         exit(EXIT_FAILURE);  
@@ -51,21 +51,21 @@ int main(int argc, char *argv[]){
         if(bytes_read < 0){
             perror("Read");
             free_slave(sm);
-            free_shm(shm);
+            destroy_shm(shm);
             exit(EXIT_FAILURE);
         }
         has_read(sm);
         if(fprintf(result_file, "%s", buffer) == 0){
             perror("Write");
             free_slave(sm);
-            free_shm(shm);
+            destroy_shm(shm);
             exit(EXIT_FAILURE);
         }
         
         if(write_shm(shm, buffer, MAX_SIZE) < 0){
             perror("Write");
             free_slave(sm);
-            free_shm(shm);
+            destroy_shm(shm);
             exit(EXIT_FAILURE);
         }
         
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
     fclose(result_file);
     close_pipes(sm);
     free_slave(sm);
-    free_shm(shm);
+    destroy_shm(shm);
 
     return 0;
     
