@@ -61,6 +61,8 @@ int main(int argc, char * argv[]){
     }
     
     free_shm(shm);
+    free(shm_name);
+    free(cant_files_str);
     return 0;
 
 }

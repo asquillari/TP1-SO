@@ -53,8 +53,17 @@ static shmADT new_shm(const char * shm_name, int oflag, mode_t mode, int prot, i
             return NULL;
         }
         new->sem_readwrite = sem_open(new->sem_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
+        if (new->sem_readwrite == SEM_FAILED){
+            free_shm(new);
+            return NULL;
+        }
+        
     } else {
         new->sem_readwrite = sem_open(new->sem_name, 0);
+        if (new->sem_readwrite == SEM_FAILED){
+            free_shm(new);
+            return NULL;
+        }
     }
     
     new->address = mmap(NULL, SHM_SIZE, prot, MAP_SHARED, new->fd, 0);
@@ -107,7 +116,7 @@ int read_shm(shmADT shm, char * buffer, size_t cant_bytes) {
     while (bytes_read < cant_bytes) {
         buffer[bytes_read] = shm->address[shm->read_offset++];
 
-        if (buffer[bytes_read] == END_OF_LINE) {
+        if (shm->address[shm->read_offset] == END_OF_LINE) {
             bytes_read++;
             break;  
         }
