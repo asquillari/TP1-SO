@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
     }
 
     fclose(result_file);
-    close_pipes(sm);
+    //close_pipes(sm);
     free_slave(sm);
     destroy_shm(shm);
 

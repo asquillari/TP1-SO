@@ -5,6 +5,7 @@
 static void create_all_slaves(slaveADT sm);
 static void ready_select(int max_fd, fd_set *read_fds);
 static void send_file(int fd, const char *filename);
+static void close_pipes(slaveADT sm);
 
 typedef struct pipesCDT{
     int master_slave[2];
@@ -169,13 +170,13 @@ int has_next_file(slaveADT sm){
     return sm->cant_files_read < sm->cant_files; 
 }
 
-void close_pipes(slaveADT sm){
+static void close_pipes(slaveADT sm){
     int i;
     for(i=0; i<sm->cant_slaves; i++){
         close(sm->pipes[i]->master_slave[1]);
         close(sm->pipes[i]->slave_master[0]);
     }
-    exit(EXIT_SUCCESS);
+    return;
 }
 
 void create_pipe(int * pipe_fd){
@@ -204,6 +205,7 @@ void free_slave(slaveADT sm) {
     if (sm == NULL) {
         return;
     }
+    close_pipes(sm);
     for (int i = 0; i < sm->cant_slaves; i++) {
         free(sm->pipes[i]);  
     }

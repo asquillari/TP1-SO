@@ -27,7 +27,6 @@ void send_first_files(slaveADT sm);
 int read_from_slave(slaveADT sm, char * buffer);
 void has_read(slaveADT sm);
 int has_next_file(slaveADT sm);
-void close_pipes(slaveADT sm);
 void create_pipe(int * pipe_fd);
 int slave();
 void start_slave(char * path, char * params[]);
