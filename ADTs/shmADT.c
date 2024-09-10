@@ -3,11 +3,6 @@
 
 #include "shmADT.h"
 
-#define ERROR -1
-#define SHM_SIZE 1024
-#define END_OF_LINE '\n'
-
-
 typedef struct shmCDT {
 
     const char * shm_name;

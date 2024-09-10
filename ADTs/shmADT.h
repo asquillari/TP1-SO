@@ -13,6 +13,10 @@
 #define SEM_NAME_RDWR "/semaphore_rdwr"
 #define SEM_NAME_MUTEX "/semaphore_mutex"
 
+#define ERROR -1
+#define SHM_SIZE 1024
+#define END_OF_LINE '\n'
+
 typedef struct shmCDT * shmADT;
 
 

@@ -13,7 +13,7 @@ int main(int argc, char * argv[]){
     char * cant_files_str = NULL;
     shmADT shm = NULL;
 
-    if (argc == 1) { // Leer desde stdin
+    if (argc == 1) { 
         size_t len = 0;
 
         if (getline(&shm_name, &len, stdin) == -1) {
@@ -34,7 +34,7 @@ int main(int argc, char * argv[]){
         
         shm = open_shm(shm_name);
 
-    } else if(argc == 3){ //me lo mandan por argumentos
+    } else if(argc == 3){ 
         shm = open_shm(argv[1]);
         cant_files = atoi(argv[2]);
 

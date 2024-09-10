@@ -3,9 +3,12 @@
 #include "slaveADT.h"
 
 static void create_all_slaves(slaveADT sm);
-static void ready_select(int max_fd, fd_set *read_fds);
-static void send_file(int fd, const char *filename);
+static int ready_select(int max_fd, fd_set *read_fds);
+static int send_file(int fd, const char *filename);
 static void close_pipes(slaveADT sm);
+static int slave();
+static void start_slave(char * path, char * params[]);
+static int create_pipe(int * pipe_fd);
 
 typedef struct pipesCDT{
     int master_slave[2];
@@ -30,8 +33,7 @@ typedef struct slaveCDT {
 slaveADT initialize_slaves(int cant_files, char ** files){
     slaveADT slaves = malloc(sizeof(slaveCDT));
     if (slaves == NULL) {
-        perror("Malloc");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 
     slaves->cant_files = cant_files;
@@ -42,39 +44,40 @@ slaveADT initialize_slaves(int cant_files, char ** files){
 
     slaves->pipes = malloc(sizeof(pipesADT) * slaves->cant_slaves);
     if (slaves->pipes == NULL) {
-        perror("Malloc");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
     for (int i = 0; i < slaves->cant_slaves; i++) {
         slaves->pipes[i] = malloc(sizeof(pipesCDT));
         if (slaves->pipes[i] == NULL) {
-            perror("Malloc pipe element");
-            exit(EXIT_FAILURE);
+            return NULL;
         }
     }
 
     FD_ZERO(&slaves->readFds);
 
-    create_all_slaves(slaves);
+    if(create_all_slaves(slaves) == ERROR){
+        return NULL;
+    }
     return slaves;
 }
 
-static void create_all_slaves(slaveADT sm){
+static int create_all_slaves(slaveADT sm){
     int i;
     for(i=0; i< sm->cant_slaves; i++){
         int pid;
 
-        create_pipe(sm->pipes[i]->master_slave);
-        create_pipe(sm->pipes[i]->slave_master);
+        if(create_pipe(sm->pipes[i]->master_slave) == NULL){
+            return ERROR;
+        }
+
+        if(create_pipe(sm->pipes[i]->slave_master) == NULL){
+            return ERROR;
+        }
 
         pid = slave();
 
         if(pid == 0){
-            int j;
-            for(j=0; j<i;j++){
-                close(sm->pipes[j]->master_slave[1]);
-                close(sm->pipes[j]->slave_master[0]);
-            }
+            close_pipes(sm);
             close(STDIN_FILENO);
             dup2(sm->pipes[i]->master_slave[0], STDIN_FILENO);
             close(STDOUT_FILENO);
@@ -82,15 +85,15 @@ static void create_all_slaves(slaveADT sm){
             close(sm->pipes[i]->master_slave[1]);
             close(sm->pipes[i]->slave_master[0]);
             char * params[] = {"./slave", NULL};
-            start_slave(SLAVE_PATH, params);
+            start_slave(SLAVE_PATH, params);            //para que chota hace esto
         }
         close(sm->pipes[i]->master_slave[0]);
         close(sm->pipes[i]->slave_master[1]);
     }
-    return;
+    return 0;
 }
 
-void send_first_files(slaveADT sm){
+int send_first_files(slaveADT sm){
     int i;
     int initial_dist = (sm->cant_files*0.2) / sm->cant_slaves;
     if(initial_dist == 0){
@@ -98,11 +101,13 @@ void send_first_files(slaveADT sm){
     }
     for(i=0; i<sm->cant_slaves; i++){
         for (int j = 1; j <= initial_dist && sm->cant_files_sent < sm->cant_files; j++){
-            send_file(sm->pipes[i]->master_slave[1], sm->files[sm->cant_files_sent]);
+            if(send_file(sm->pipes[i]->master_slave[1], sm->files[sm->cant_files_sent]) == NULL){
+                return ERROR;
+            }
             sm->cant_files_sent++;    
         }
     }
-    return;
+    return 0;
 }
 
 
@@ -112,15 +117,17 @@ int read_from_slave(slaveADT sm, char * buffer){
     ssize_t bytes_read;
     int i;
 
-    FD_ZERO(&read_fds); //limpio el set
+    FD_ZERO(&read_fds); 
 
     for(i = 0; i < sm->cant_slaves ; i++) {
-        // agregamos los fds al set
         FD_SET(sm->pipes[i]->slave_master[0], &read_fds);
         max_fd = MAX(max_fd,sm->pipes[i]->slave_master[0]);
     }
 
-    ready_select(max_fd, &read_fds);
+    if(ready_select(max_fd, &read_fds) == NULL){
+        return ERROR;
+    }
+
 
     int sindex = -1;
     for(i = 0 ; i< sm->cant_slaves ; i++) {
@@ -130,7 +137,7 @@ int read_from_slave(slaveADT sm, char * buffer){
     }    
                       
     if(sindex == -1) {
-        return EXIT_FAILURE;
+        return ERROR;
     }
 
     bytes_read = read(sm->pipes[sindex]->slave_master[0], buffer, MAX_SIZE);
@@ -139,17 +146,18 @@ int read_from_slave(slaveADT sm, char * buffer){
     FD_CLR(sm->pipes[sindex]->master_slave[1], &sm->readFds);
 
     if(sm->cant_files_sent < sm->cant_files){
-        send_file(sm->pipes[sindex]->master_slave[1], sm->files[sm->cant_files_sent]);
+        if(send_file(sm->pipes[sindex]->master_slave[1], sm->files[sm->cant_files_sent]) == NULL){
+            return ERROR;
+        }
         sm->cant_files_sent++;
     }
 
     return bytes_read;
 }
 
-static void ready_select(int max_fd, fd_set *read_fds) {
+static int ready_select(int max_fd, fd_set *read_fds) {
     if (select(max_fd + 1, read_fds, NULL, NULL, NULL) == -1) {
-        perror("Select");
-        exit(1);
+        return NULL;
     }
 }
 
@@ -157,10 +165,12 @@ void has_read(slaveADT sm){
     sm->cant_files_read++;
 }
 
-static void send_file(int fd, const char *filename) {
+static int send_file(int fd, const char *filename) {
     char input[MAX_SIZE];
     snprintf(input, MAX_SIZE, "%s", filename);  
-    write(fd, input, strlen(input));
+    if(write(fd, input, strlen(input)) == -1){
+        return NULL;
+    }
 }
 
 int has_next_file(slaveADT sm){
@@ -172,30 +182,30 @@ int has_next_file(slaveADT sm){
 
 static void close_pipes(slaveADT sm){
     int i;
-    for(i=0; i<sm->cant_slaves; i++){
-        close(sm->pipes[i]->master_slave[1]);
-        close(sm->pipes[i]->slave_master[0]);
+    for(i = 0; i < sm->cant_slaves; i++){
+        if(sm->pipes[i] != NULL){
+            close(sm->pipes[i]->master_slave[1]);
+            close(sm->pipes[i]->slave_master[0]);
+        }
     }
     return;
 }
 
-void create_pipe(int * pipe_fd){
+static int create_pipe(int * pipe_fd){
     if(pipe(pipe_fd) == -1){
-        perror("Pipe");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 }
 
-int slave(){
+static int slave(){
     int pid;
     if((pid=fork()) == -1){
-        perror("Fork");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
     return pid;
 }
 
-void start_slave(char * path, char * params[]){
+static void start_slave(char * path, char * params[]){
     execve(path, params, 0);
     perror("Execve");
     exit(EXIT_FAILURE);
@@ -207,7 +217,9 @@ void free_slave(slaveADT sm) {
     }
     close_pipes(sm);
     for (int i = 0; i < sm->cant_slaves; i++) {
-        free(sm->pipes[i]);  
+        if(sm->pipes[i] != NULL){
+            free(sm->pipes[i]);
+        }
     }
     
     free(sm->pipes);

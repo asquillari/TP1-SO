@@ -1,7 +1,5 @@
-// This is a personal academic project. Dear PVS-Studio, please check it.
+// This is a personal academic project. Deead_from_slaar PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-#include "include/app.h"
-#include "include/app_lib.h"
 #include "ADTs/slaveADT.h"
 #include "ADTs/shmADT.h"
 
@@ -10,8 +8,7 @@ int main(int argc, char *argv[]){
     if (argc == 1) {
         char buffer_error[MAX_ERROR];
         snprintf(buffer_error, MAX_ERROR, "Error. Use: %s 'file' 'file' ...", argv[0]);
-        printf("%s\n", buffer_error);
-        exit(EXIT_FAILURE); //siento que esto esta mal, ademas lo modularizaria
+        exit_failure(buffer_error); 
     }
 
     int cant_files=argc-1;
@@ -19,8 +16,7 @@ int main(int argc, char *argv[]){
 
     shmADT shm = create_shm("CONNECT_SHM");
     if (shm == NULL) {
-        perror("Error creating shared memory");
-        exit(EXIT_FAILURE);
+        exit_failure("Error creating shared memory");
     }
 
     printf("%s\n%d\n", "CONNECT_SHM", cant_files);
@@ -28,56 +24,57 @@ int main(int argc, char *argv[]){
     
     slaveADT sm = initialize_slaves(cant_files, files);
     if (sm == NULL) {
-        perror("Error creating slave manager");
         destroy_shm(shm);
-        exit(EXIT_FAILURE);
+        exit_failure("Error creating slave manager");
     }
 
     sleep(2);
 
-    send_first_files(sm);
+    if(send_first_files(sm) < 0){
+        free_slave(sm);
+        destroy_shm(shm);
+        exit_failure("Error sending files to slaves");
+    }
 
-    // creamos el file de resultado 
     FILE * result_file = fopen("result.txt", "w"); 
     if (result_file == NULL) {
         destroy_shm(shm);
         free_slave(sm);
-        perror("Error opening result file");
-        exit(EXIT_FAILURE);  
+        exit_failure("Error opening result file");  
     }
 
     while(has_next_file(sm)){
         char buffer[MAX_SIZE] = {0};
-        int bytes_read = read_from_slave(sm, buffer);
+        int bytes_read = rve(sm, buffer);
         if(bytes_read < 0){
-            perror("Read");
             free_slave(sm);
             destroy_shm(shm);
-            exit(EXIT_FAILURE);
+            exit_failure("Read");
         }
         has_read(sm);
         if(fprintf(result_file, "%s", buffer) == 0){
-            perror("Write");
             free_slave(sm);
             destroy_shm(shm);
-            exit(EXIT_FAILURE);
+            exit_failure("Write");
         }
         
         if(write_shm(shm, buffer, MAX_SIZE) < 0){
-            perror("Write");
             free_slave(sm);
             destroy_shm(shm);
-            exit(EXIT_FAILURE);
+            exit_failure("Write");
         }
         
-        //fijarse que onda el error
     }
 
     fclose(result_file);
-    //close_pipes(sm);
     free_slave(sm);
     destroy_shm(shm);
 
     return 0;
     
+}
+
+void exit_failure(const char *msg) {
+    perror(msg);
+    exit(EXIT_FAILURE);
 }
