@@ -169,7 +169,15 @@ void destroy_shm(shmADT shm) {
 
     munmap(shm->address, SHM_SIZE);
     shm_unlink(shm->shm_name);
-    sem_unlink(shm->sem_name_readwrite);
-    sem_unlink(shm->sem_name_mutex);
+    if (shm->sem_readwrite != NULL) {
+        sem_close(shm->sem_readwrite);
+        sem_unlink(shm->sem_name_readwrite);
+    }
+
+    if (shm->sem_mutex != NULL) {
+        sem_close(shm->sem_mutex);
+        sem_unlink(shm->sem_name_mutex);
+    }
+    
     free(shm);
 }
