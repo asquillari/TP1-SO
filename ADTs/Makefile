@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -fsanitize=address -g
+CFLAGS = -Wall
 SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:.c=.o)
 

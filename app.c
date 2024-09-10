@@ -24,7 +24,8 @@ int main(int argc, char *argv[]){
     }
 
     printf("%s\n%d\n", "CONNECT_SHM", cant_files);
-
+    fflush(stdout);
+    
     slaveADT sm = initialize_slaves(cant_files, files);
     if (sm == NULL) {
         perror("Error creating slave manager");

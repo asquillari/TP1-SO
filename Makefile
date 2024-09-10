@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -fsanitize=address -g
+CFLAGS = -Wall 
 SOURCES_ADT=$(wildcard ADTs/*.c)
 OBJECTS_ADT=$(SOURCES_ADT:.c=.o)
 all: $(BINARIES) $(OBJECTS_ADT)
@@ -21,4 +21,4 @@ slave: slave.c $(OBJECTS_ADT)
 
 
 clean:
-	rm -f view slave md5 result.txt *.o
+	rm -f view slave md5 result.txt *.o ADTs/*.o
