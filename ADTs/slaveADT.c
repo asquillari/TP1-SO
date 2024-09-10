@@ -2,7 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "slaveADT.h"
 
-static void create_all_slaves(slaveADT sm);
+static int create_all_slaves(slaveADT sm);
 static int ready_select(int max_fd, fd_set *read_fds);
 static int send_file(int fd, const char *filename);
 static void close_pipes(slaveADT sm);
@@ -66,11 +66,11 @@ static int create_all_slaves(slaveADT sm){
     for(i=0; i< sm->cant_slaves; i++){
         int pid;
 
-        if(create_pipe(sm->pipes[i]->master_slave) == NULL){
+        if(create_pipe(sm->pipes[i]->master_slave) == ERROR){
             return ERROR;
         }
 
-        if(create_pipe(sm->pipes[i]->slave_master) == NULL){
+        if(create_pipe(sm->pipes[i]->slave_master) == ERROR){
             return ERROR;
         }
 
@@ -101,7 +101,7 @@ int send_first_files(slaveADT sm){
     }
     for(i=0; i<sm->cant_slaves; i++){
         for (int j = 1; j <= initial_dist && sm->cant_files_sent < sm->cant_files; j++){
-            if(send_file(sm->pipes[i]->master_slave[1], sm->files[sm->cant_files_sent]) == NULL){
+            if(send_file(sm->pipes[i]->master_slave[1], sm->files[sm->cant_files_sent]) == ERROR){
                 return ERROR;
             }
             sm->cant_files_sent++;    
@@ -124,7 +124,7 @@ int read_from_slave(slaveADT sm, char * buffer){
         max_fd = MAX(max_fd,sm->pipes[i]->slave_master[0]);
     }
 
-    if(ready_select(max_fd, &read_fds) == NULL){
+    if(ready_select(max_fd, &read_fds) == ERROR){
         return ERROR;
     }
 
@@ -146,7 +146,7 @@ int read_from_slave(slaveADT sm, char * buffer){
     FD_CLR(sm->pipes[sindex]->master_slave[1], &sm->readFds);
 
     if(sm->cant_files_sent < sm->cant_files){
-        if(send_file(sm->pipes[sindex]->master_slave[1], sm->files[sm->cant_files_sent]) == NULL){
+        if(send_file(sm->pipes[sindex]->master_slave[1], sm->files[sm->cant_files_sent]) == ERROR){
             return ERROR;
         }
         sm->cant_files_sent++;
@@ -156,9 +156,10 @@ int read_from_slave(slaveADT sm, char * buffer){
 }
 
 static int ready_select(int max_fd, fd_set *read_fds) {
-    if (select(max_fd + 1, read_fds, NULL, NULL, NULL) == -1) {
-        return NULL;
+    if (select(max_fd + 1, read_fds, NULL, NULL, NULL) == ERROR) {
+        return ERROR;
     }
+    return 0;
 }
 
 void has_read(slaveADT sm){
@@ -169,8 +170,9 @@ static int send_file(int fd, const char *filename) {
     char input[MAX_SIZE];
     snprintf(input, MAX_SIZE, "%s", filename);  
     if(write(fd, input, strlen(input)) == -1){
-        return NULL;
+        return ERROR;
     }
+    return 0;
 }
 
 int has_next_file(slaveADT sm){
@@ -192,15 +194,16 @@ static void close_pipes(slaveADT sm){
 }
 
 static int create_pipe(int * pipe_fd){
-    if(pipe(pipe_fd) == -1){
-        return NULL;
+    if(pipe(pipe_fd) == ERROR){
+        return ERROR;
     }
+    return 0;
 }
 
 static int slave(){
     int pid;
     if((pid=fork()) == -1){
-        return NULL;
+        return ERROR;
     }
     return pid;
 }
