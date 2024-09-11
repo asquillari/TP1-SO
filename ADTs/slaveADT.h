@@ -29,5 +29,6 @@ int send_first_files(slaveADT sm);
 int read_from_slave(slaveADT sm, char * buffer);
 void has_read(slaveADT sm);
 int has_next_file(slaveADT sm);
+void free_slave(slaveADT sm);
 
 #endif

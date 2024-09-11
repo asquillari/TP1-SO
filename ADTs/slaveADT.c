@@ -44,11 +44,17 @@ slaveADT initialize_slaves(int cant_files, char ** files){
 
     slaves->pipes = malloc(sizeof(pipesADT) * slaves->cant_slaves);
     if (slaves->pipes == NULL) {
+        free(slaves);
         return NULL;
     }
     for (int i = 0; i < slaves->cant_slaves; i++) {
         slaves->pipes[i] = malloc(sizeof(pipesCDT));
         if (slaves->pipes[i] == NULL) {
+            for (int j = 0; j < i; j++) {
+                free(slaves->pipes[j]);
+            }
+            free(slaves->pipes);
+            free(slaves);
             return NULL;
         }
     }
@@ -56,6 +62,7 @@ slaveADT initialize_slaves(int cant_files, char ** files){
     FD_ZERO(&slaves->readFds);
 
     if(create_all_slaves(slaves) == ERROR){
+        free_slave(slaves);
         return NULL;
     }
     return slaves;
@@ -85,7 +92,7 @@ static int create_all_slaves(slaveADT sm){
             close(sm->pipes[i]->master_slave[1]);
             close(sm->pipes[i]->slave_master[0]);
             char * params[] = {"./slave", NULL};
-            start_slave(SLAVE_PATH, params);            //para que chota hace esto
+            start_slave(SLAVE_PATH, params);
         }
         close(sm->pipes[i]->master_slave[0]);
         close(sm->pipes[i]->slave_master[1]);

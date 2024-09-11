@@ -73,20 +73,23 @@ Icon?
 
 # La carpeta de files
 files/
+.config/
+
+# Vscode
+.vscode/
 
 #El bash hhistory
 .bash_history
 
-#Ignora binarios
+#Ignora binarios y result
 a.out
 slave
 view
 app
 md5
-result.txt
+*.txt
 
 #ignora archivos de depuracion
-PVS-studio.log
+*.log
 report.tasks
 strace_out
-trace.log
