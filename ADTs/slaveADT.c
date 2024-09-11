@@ -57,6 +57,10 @@ slaveADT initialize_slaves(int cant_files, char ** files){
             free(slaves);
             return NULL;
         }
+        slaves->pipes[i]->master_slave[0] = -1;
+        slaves->pipes[i]->master_slave[1] = -1;
+        slaves->pipes[i]->slave_master[0] = -1;
+        slaves->pipes[i]->slave_master[1] = -1;
     }
 
     FD_ZERO(&slaves->readFds);
@@ -189,15 +193,18 @@ int has_next_file(slaveADT sm){
     return sm->cant_files_read < sm->cant_files; 
 }
 
-static void close_pipes(slaveADT sm){
+static void close_pipes(slaveADT sm) {
     int i;
-    for(i = 0; i < sm->cant_slaves; i++){
-        if(sm->pipes[i] != NULL){
-            close(sm->pipes[i]->master_slave[1]);
-            close(sm->pipes[i]->slave_master[0]);
+    for (i = 0; i < sm->cant_slaves; i++) {
+        if (sm->pipes[i] != NULL) {
+            if (sm->pipes[i]->master_slave[1] != -1) {
+                close(sm->pipes[i]->master_slave[1]);
+            }
+            if (sm->pipes[i]->slave_master[0] != -1) {
+                close(sm->pipes[i]->slave_master[0]);
+            }
         }
     }
-    return;
 }
 
 static int create_pipe(int * pipe_fd){

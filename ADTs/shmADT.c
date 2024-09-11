@@ -177,17 +177,28 @@ void destroy_shm(shmADT shm) {
     if(shm == NULL) {
         return;
     }
-
-    munmap(shm->address, SHM_SIZE);
-    shm_unlink(shm->shm_name);
+    if(munmap(shm->address, SHM_SIZE) < 0) {
+        handle_error("munmap");
+    }
+    if(shm_unlink(shm->shm_name) < 0) {
+        handle_error("shm_unlink");
+    }
     if (shm->sem_buffer != NULL) {
-        sem_close(shm->sem_buffer);
-        sem_unlink(shm->sem_name_buffer);
+        if(sem_close(shm->sem_buffer) < 0) {
+            handle_error("sem_close");
+        }
+        if(sem_unlink(shm->sem_name_buffer) < 0) {
+            handle_error("sem_unlink");
+        }
     }
 
     if (shm->sem_mutex != NULL) {
-        sem_close(shm->sem_mutex);
-        sem_unlink(shm->sem_name_mutex);
+        if(sem_close(shm->sem_mutex) < 0) {
+            handle_error("sem_close");
+        }
+        if(sem_unlink(shm->sem_name_mutex) < 0) {
+            handle_error("sem_unlink");
+        }
     }
     
     free(shm);

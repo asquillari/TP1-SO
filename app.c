@@ -1,4 +1,4 @@
-// This is a personal academic project. Deead_from_slaar PVS-Studio, please check it.
+// This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "ADTs/slaveADT.h"
 #include "ADTs/shmADT.h"
