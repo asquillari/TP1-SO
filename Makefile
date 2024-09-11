@@ -9,8 +9,8 @@ $(OBJECTS_ADT): $(SOURCES_ADT)
 
 all: app slave view
 
-app: app.c app_lib.c $(OBJECTS_ADT)
-	$(CC) $(CFLAGS) app.c app_lib.c $(OBJECTS_ADT) -o md5
+app: app.c $(OBJECTS_ADT)
+	$(CC) $(CFLAGS) app.c $(OBJECTS_ADT) -o md5
 
 view: view.c $(OBJECTS_ADT)
 	$(CC) $(CFLAGS) view.c $(OBJECTS_ADT) -o view

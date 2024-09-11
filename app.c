@@ -3,6 +3,8 @@
 #include "ADTs/slaveADT.h"
 #include "ADTs/shmADT.h"
 
+static void exit_failure(const char *msg);
+
 int main(int argc, char *argv[]){
     //esto hay que modilarizarlo todo y hacer capaz una clase
     if (argc == 1) {
@@ -45,7 +47,7 @@ int main(int argc, char *argv[]){
 
     while(has_next_file(sm)){
         char buffer[MAX_SIZE] = {0};
-        int bytes_read = rve(sm, buffer);
+        int bytes_read = read_from_slave(sm, buffer);
         if(bytes_read < 0){
             free_slave(sm);
             destroy_shm(shm);
@@ -74,7 +76,7 @@ int main(int argc, char *argv[]){
     
 }
 
-void exit_failure(const char *msg) {
+static void exit_failure(const char *msg) {
     perror(msg);
     exit(EXIT_FAILURE);
 }
