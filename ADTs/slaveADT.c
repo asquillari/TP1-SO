@@ -91,19 +91,20 @@ static int create_all_slaves(slaveADT sm){
             if(close_pipes(sm) == ERROR){
                 return ERROR;
             }
-            close(STDIN_FILENO);
-            dup2(sm->pipes[i]->master_slave[0], STDIN_FILENO);
-            close(STDOUT_FILENO);
-            dup2(sm->pipes[i]->slave_master[1], STDOUT_FILENO);
-            close(sm->pipes[i]->master_slave[1]);
-            close(sm->pipes[i]->slave_master[0]);
+            if(close(STDIN_FILENO) == ERROR || close(STDOUT_FILENO) == ERROR){
+                return ERROR;
+            }
+            if( dup2(sm->pipes[i]->master_slave[0], STDIN_FILENO) == ERROR || dup2(sm->pipes[i]->slave_master[1], STDOUT_FILENO) == ERROR){
+                return ERROR;
+            }
             char * params[] = {"./slave", NULL};
             if (start_slave(SLAVE_PATH, params) == ERROR){
                 return ERROR;
             }
         }
-        close(sm->pipes[i]->master_slave[0]);
-        close(sm->pipes[i]->slave_master[1]);
+        if(close(sm->pipes[i]->master_slave[0]) == ERROR || close(sm->pipes[i]->slave_master[1]) == ERROR){
+            return ERROR;
+        }
     }
     return 0;
 }
