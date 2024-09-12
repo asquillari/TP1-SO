@@ -5,9 +5,9 @@
 static int create_all_slaves(slaveADT sm);
 static int ready_select(int max_fd, fd_set *read_fds);
 static int send_file(int fd, const char *filename);
-static void close_pipes(slaveADT sm);
+static int close_pipes(slaveADT sm);
 static int slave();
-static void start_slave(char * path, char * params[]);
+static int start_slave(char * path, char * params[]);
 static int create_pipe(int * pipe_fd);
 
 typedef struct pipesCDT{
@@ -88,7 +88,9 @@ static int create_all_slaves(slaveADT sm){
         pid = slave();
 
         if(pid == 0){
-            close_pipes(sm);
+            if(close_pipes(sm) == ERROR){
+                return ERROR;
+            }
             close(STDIN_FILENO);
             dup2(sm->pipes[i]->master_slave[0], STDIN_FILENO);
             close(STDOUT_FILENO);
@@ -96,7 +98,9 @@ static int create_all_slaves(slaveADT sm){
             close(sm->pipes[i]->master_slave[1]);
             close(sm->pipes[i]->slave_master[0]);
             char * params[] = {"./slave", NULL};
-            start_slave(SLAVE_PATH, params);
+            if (start_slave(SLAVE_PATH, params) == ERROR){
+                return ERROR;
+            }
         }
         close(sm->pipes[i]->master_slave[0]);
         close(sm->pipes[i]->slave_master[1]);
@@ -193,18 +197,23 @@ int has_next_file(slaveADT sm){
     return sm->cant_files_read < sm->cant_files; 
 }
 
-static void close_pipes(slaveADT sm) {
+static int close_pipes(slaveADT sm) {
     int i;
     for (i = 0; i < sm->cant_slaves; i++) {
         if (sm->pipes[i] != NULL) {
             if (sm->pipes[i]->master_slave[1] != -1) {
-                close(sm->pipes[i]->master_slave[1]);
+                if(close(sm->pipes[i]->master_slave[1]) == -1){
+                    return ERROR;
+                }
             }
             if (sm->pipes[i]->slave_master[0] != -1) {
-                close(sm->pipes[i]->slave_master[0]);
+                if(close(sm->pipes[i]->slave_master[0]) == -1){
+                    return ERROR;
+                }
             }
         }
     }
+    return 0;
 }
 
 static int create_pipe(int * pipe_fd){
@@ -222,10 +231,9 @@ static int slave(){
     return pid;
 }
 
-static void start_slave(char * path, char * params[]){
+static int start_slave(char * path, char * params[]){
     execve(path, params, 0);
-    perror("Execve");
-    exit(EXIT_FAILURE);
+    return ERROR;
 }
 
 void free_slave(slaveADT sm) {

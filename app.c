@@ -54,7 +54,8 @@ int main(int argc, char *argv[]){
             exit_failure("Read");
         }
         has_read(sm);
-        if(fprintf(result_file, "%s", buffer) == 0){
+        if(fprintf(result_file, "%s", buffer) < 0){
+            fclose(result_file);
             free_slave(sm);
             destroy_shm(shm);
             exit_failure("Write");
