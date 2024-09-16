@@ -8,7 +8,6 @@ int main(int argc, char *argv[]) {
         ssize_t bytes_read = read(STDIN_FILENO, file, MAX_SIZE - 1);
 
         if (bytes_read <= 0) {
-            //hay que manejar mejor el error
             break;
         }
 
@@ -44,10 +43,10 @@ static void get_md5(char *file) {
     }
     
     fprintf(stdout, FORMAT_OUTPUT, md5, file, getpid());
-    fflush(stdout);  //mandamos inmediatamente
+    fflush(stdout);  
 
     pclose(fp);
-}//pclose, fflush todos esos me parece que tenemos que manejar el error
+}
 
 
 static int is_file(char * file){

@@ -6,7 +6,6 @@
 static void exit_failure(const char *msg);
 
 int main(int argc, char *argv[]){
-    //esto hay que modilarizarlo todo y hacer capaz una clase
     if (argc == 1) {
         char buffer_error[MAX_ERROR];
         snprintf(buffer_error, MAX_ERROR, "Error. Use: %s 'file' 'file' ...", argv[0]);
