@@ -8,7 +8,7 @@ static void exit_failure(const char *msg);
 int main(int argc, char *argv[]){
     if (argc == 1) {
         char buffer_error[MAX_ERROR];
-        snprintf(buffer_error, MAX_ERROR, "Error. Use: %s 'file' 'file' ...", argv[0]);
+        snprintf(buffer_error, MAX_ERROR, "Error. Use: %s 'file' 'file' ... \n", argv[0]);
         exit_failure(buffer_error); 
     }
 

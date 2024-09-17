@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #define READ 0
 #define WRITE 1

@@ -9,6 +9,7 @@ static int close_pipes(slaveADT sm);
 static int slave();
 static int start_slave(char * path, char * params[]);
 static int create_pipe(int * pipe_fd);
+static int wait_for_slaves(slaveADT sm);
 
 typedef struct pipesCDT{
     int master_slave[2];
@@ -25,6 +26,7 @@ typedef struct slaveCDT {
     // Slave info
     int cant_slaves;
     pipesADT * pipes;
+    int * pids;
     fd_set readFds;
 
 } slaveCDT;
@@ -42,8 +44,15 @@ slaveADT initialize_slaves(int cant_files, char ** files){
     slaves->cant_files_read = 0;
     slaves->cant_slaves = cant_files < MAX_SLAVES ? cant_files : MAX_SLAVES;
 
+    slaves->pids = malloc(sizeof(int) * slaves->cant_slaves);
+    if (slaves->pids == NULL) {
+        free(slaves);
+        return NULL;
+    }
+
     slaves->pipes = malloc(sizeof(pipesADT) * slaves->cant_slaves);
     if (slaves->pipes == NULL) {
+        free(slaves->pids);
         free(slaves);
         return NULL;
     }
@@ -54,6 +63,7 @@ slaveADT initialize_slaves(int cant_files, char ** files){
                 free(slaves->pipes[j]);
             }
             free(slaves->pipes);
+            free(slaves->pids);
             free(slaves);
             return NULL;
         }
@@ -86,6 +96,7 @@ static int create_all_slaves(slaveADT sm){
         }
 
         pid = slave();
+        sm->pids[i] = pid;
 
         if(pid == 0){
             if(close_pipes(sm) == ERROR){
@@ -237,17 +248,33 @@ static int start_slave(char * path, char * params[]){
     return ERROR;
 }
 
+static int wait_for_slaves(slaveADT sm){
+    for(int i = 0; i < sm->cant_slaves; i++){
+        if(waitpid(sm->pids[i], NULL, 0) == ERROR){
+            return ERROR;
+        }
+    }
+    return 0;
+}
+
 void free_slave(slaveADT sm) {
     if (sm == NULL) {
         return;
     }
-    close_pipes(sm);
+    if(close_pipes(sm) == ERROR){
+        perror("Error closing pipes");
+        exit(EXIT_FAILURE);
+    }
+    if(wait_for_slaves(sm) == ERROR){
+        perror("Error waiting for slaves");
+        exit(EXIT_FAILURE);
+    }
     for (int i = 0; i < sm->cant_slaves; i++) {
         if(sm->pipes[i] != NULL){
             free(sm->pipes[i]);
         }
     }
-    
+    free(sm->pids);    
     free(sm->pipes);
     free(sm);
 }
